@@ -40,11 +40,69 @@ function TabPanel(props) {
 
 export default function Header(props) {
 
+    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+    const [session, setSession] = React.useState(window.sessionStorage.getItem("access-token"));
     let button;
     const releasedMovie = "null";
     const [showModal, setShowModal] = React.useState(false);
     const [modalIsOpen, setIsOpen] = React.useState(false);
     const [value, setValue] = React.useState(0);
+    const [registerUserForm, setRegisterUserForm] = React.useState({
+        email_address: "",
+        first_name: "",
+        last_name: "",
+        mobile_number: "",
+        password: ""
+
+    });
+    const [username, setUsername] = React.useState("");
+    const [password, setPassword] = React.useState("");
+
+    const inputChangedHandler = (event) => {
+        const state = registerUserForm;
+        state[event.target.name] = event.target.value;
+
+        setRegisterUserForm({...state});
+
+    }
+
+    const inputUserNameHandler = (event) => {
+        setUsername(event.target.value);
+    }
+    const inputPasswordHandler = (event) => {
+        setPassword(event.target.value);
+    }
+
+    const onLoginFormSubmitted = async () => {
+        const rawResponse = await fetch(props.baseUrl + '/auth/login',
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "authorization": "Basic " + window.btoa(username + ":" + password)
+                                }
+                            });
+        window.sessionStorage.setItem("access-token",rawResponse.headers.get("access-token"));
+        setSession(window.sessionStorage.getItem("access-token"));
+        const data = await rawResponse.json();    
+        setIsLoggedIn(true);
+        closeModal();
+
+    }
+
+    const onFormSubmitted = async (event) => {
+        const rawResponse = await fetch(props.baseUrl + '/signup',
+                                    {
+                                        method:"POST",
+                                        headers:{
+                                            'Content-Type':'application/json'
+                                        },
+                                        body:JSON.stringify(registerUserForm)
+                                    }
+                                    );
+        const data = await rawResponse.json();
+        console.log(data);
+    }
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -58,16 +116,32 @@ export default function Header(props) {
     const closeModal = () => {
         setIsOpen(false);
     }
+    const logoutHandler = async () => {
+        const rawResponse = await fetch(props.baseUrl + '/auth/logout',
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "authorization": "Basic " + window.btoa(username + ":" + password)
+                                }
+                            });
+        window.sessionStorage.removeItem("access-token");
+        setSession(window.sessionStorage.getItem("access-token"));
+        const data = await rawResponse.json();   
+        console.log(data); 
+        setIsLoggedIn(false);
+    }
 
     if (releasedMovie) {
         button = <Button variant="contained" color="primary" onClick={openModal}>Book Show</Button>;
     }
     return (
         <div className="header">
-            <img src={logo} alt="" />
+            <img src={logo} alt=""  className="logoRotate"/>
             <span style={{ float: "right" }}>
                 {button}
-                <Button variant="contained" color="default" style={{ marginLeft: "10px" }}>Login</Button><Button variant="contained" color="default" style={{ marginLeft: "10px" }}>Logout</Button>
+                {session? <Button variant="contained" color="default" style={{ marginLeft: "10px" }} onClick={logoutHandler}>Logout</Button> : <Button variant="contained" color="default" style={{ marginLeft: "10px" }} onClick={openModal}>Login</Button>
+                }
             </span>
             { showModal ? (<Modal
                 isOpen={modalIsOpen}
@@ -78,7 +152,6 @@ export default function Header(props) {
                 <Tabs
                     value={value}
                     indicatorColor="secondary"
-                    textColor="default"
                     onChange={handleChange}
                     aria-label="disabled tabs example"
                 >
@@ -93,6 +166,9 @@ export default function Header(props) {
                             </InputLabel>
                             <Input
                                 id="username"
+                                name="username"
+                                type="text"
+                                onChange={inputUserNameHandler}
                             />
                             <FormHelperText className="dispNone">
                                 <span className="red">Required</span>
@@ -104,6 +180,9 @@ export default function Header(props) {
                             </InputLabel>
                             <Input
                                 id="password"
+                                type="password"
+                                name="password"
+                                onChange={inputPasswordHandler}
                             />
                             <FormHelperText className="dispNone">
                                 <span className="red">Required</span>
@@ -112,28 +191,35 @@ export default function Header(props) {
                         <br/>
                         <br/>
                         <br/>
-                        <div style={{textAlign: "center"}}><Button variant="contained" color="primary">Login</Button></div>
+                        <div style={{textAlign: "center"}}>
+                            <Button variant="contained" color="primary" onClick={onLoginFormSubmitted}>Login</Button>
+                        </div>
                     </div>
                 </TabPanel>
                 <TabPanel value={value} index={1}>
                 <div style={{margin:"20px", padding: "0 20px"}}>
+                    
                         <FormControl required className="formControl">
-                            <InputLabel htmlFor="firstname">
+                            <InputLabel htmlFor="first_name">
                                 First Name
                             </InputLabel>
                             <Input
-                                id="firstname"
+                                id="first_name"
+                                name="first_name"
+                                type="text"
+                                onChange={inputChangedHandler}
                             />
-                            <FormHelperText className="dispNone">
-                                <span className="red">Required</span>
-                            </FormHelperText>
                         </FormControl><br/><br/>
                         <FormControl required className="formControl">
-                            <InputLabel htmlFor="lastname">
+                            <InputLabel htmlFor="last_name">
                                 Last Name
                             </InputLabel>
                             <Input
-                                id="lastname"
+                                refs="last_name"
+                                id="last_name"
+                                name="last_name"
+                                type="text"
+                                onChange={inputChangedHandler}
                             />
                             <FormHelperText className="dispNone">
                                 <span className="red">Required</span>
@@ -146,7 +232,11 @@ export default function Header(props) {
                                 Email
                             </InputLabel>
                             <Input
+                                refs="email"
                                 id="email"
+                                name="email_address"
+                                type="text"
+                                onChange={inputChangedHandler}
                             />
                             <FormHelperText className="dispNone">
                                 <span className="red">Required</span>
@@ -159,7 +249,11 @@ export default function Header(props) {
                                 Password
                             </InputLabel>
                             <Input
+                                refs="password"
                                 id="password"
+                                name="password"
+                                type="text"
+                                onChange={inputChangedHandler}
                             />
                             <FormHelperText className="dispNone">
                                 <span className="red">Required</span>
@@ -172,7 +266,11 @@ export default function Header(props) {
                                 Contact No.
                             </InputLabel>
                             <Input
-                                id="contact"
+                                refs="mobile_number"
+                                id="mobile_number"
+                                name="mobile_number"
+                                type="number"
+                                onChange={inputChangedHandler}
                             />
                             <FormHelperText className="dispNone">
                                 <span className="red">Required</span>
@@ -181,7 +279,9 @@ export default function Header(props) {
                         <br/>
                         <br/>
                         <br/>
-                        <div style={{textAlign: "center"}}><Button variant="contained" color="primary">Register</Button></div>
+                        <div style={{textAlign: "center"}}>
+                            <Button variant="contained" color="primary" onClick={onFormSubmitted}>Register</Button>
+                        </div>
                     </div>
                 </TabPanel>
 
