@@ -43,7 +43,6 @@ export default function Header(props) {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
     const [session, setSession] = React.useState(window.sessionStorage.getItem("access-token"));
     let button;
-    const releasedMovie = "null";
     const [showModal, setShowModal] = React.useState(false);
     const [modalIsOpen, setIsOpen] = React.useState(false);
     const [value, setValue] = React.useState(0);
@@ -84,7 +83,8 @@ export default function Header(props) {
                             });
         window.sessionStorage.setItem("access-token",rawResponse.headers.get("access-token"));
         setSession(window.sessionStorage.getItem("access-token"));
-        const data = await rawResponse.json();    
+        const data = await rawResponse.json();  
+          
         setIsLoggedIn(true);
         closeModal();
 
@@ -132,7 +132,7 @@ export default function Header(props) {
         setIsLoggedIn(false);
     }
 
-    if (releasedMovie) {
+    if (props.detailButton && isLoggedIn) {
         button = <Button variant="contained" color="primary" onClick={openModal}>Book Show</Button>;
     }
     return (
