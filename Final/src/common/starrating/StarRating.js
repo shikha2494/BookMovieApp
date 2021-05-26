@@ -3,7 +3,6 @@ import './StarRating.css';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 
 export default function StarRating(props) {
-    console.log(props.rating);
     const [currentRating, setCurrentRating] = React.useState();
 
     React.useEffect(() => {

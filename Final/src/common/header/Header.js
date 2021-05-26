@@ -12,6 +12,7 @@ import FormControl from "@material-ui/core/FormControl";
 import Input from '@material-ui/core/Input';
 import FormHelperText from "@material-ui/core/FormHelperText";
 import InputLabel from "@material-ui/core/InputLabel";
+import { Redirect } from 'react-router';
 
 const customStyles = {
     content: {
@@ -54,14 +55,22 @@ export default function Header(props) {
         password: ""
 
     });
+    const [reqemail, setReqEmail] = React.useState("dispNone");
+    const [reqfirstname, setReqFirstName] = React.useState("dispNone");
+    const [reqlastname, setReqLastName] = React.useState("dispNone");
+    const [reqmobile, setReqMobile] = React.useState("dispNone");
+    const [reqpass, setReqPass] = React.useState("dispNone");
     const [username, setUsername] = React.useState("");
+    const [requsername, setReqUserName] = React.useState("dispNone");
     const [password, setPassword] = React.useState("");
+    const [reqpassword, setReqPassword] = React.useState("dispNone");
+    const [showdisplay, setShowDisplay] = React.useState("dispNone");
 
     const inputChangedHandler = (event) => {
         const state = registerUserForm;
         state[event.target.name] = event.target.value;
 
-        setRegisterUserForm({...state});
+        setRegisterUserForm({ ...state });
 
     }
 
@@ -72,36 +81,75 @@ export default function Header(props) {
         setPassword(event.target.value);
     }
 
-    const onLoginFormSubmitted = async () => {
-        const rawResponse = await fetch(props.baseUrl + '/auth/login',
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "authorization": "Basic " + window.btoa(username + ":" + password)
-                                }
-                            });
-        window.sessionStorage.setItem("access-token",rawResponse.headers.get("access-token"));
-        setSession(window.sessionStorage.getItem("access-token"));
-        const data = await rawResponse.json();  
-          
-        setIsLoggedIn(true);
-        closeModal();
+    const validateLoginForm = () => {
+        username === "" ? setReqUserName("dispBlock") : setReqUserName("dispNone");
+        password === "" ? setReqPassword("dispBlock") : setReqPassword("dispNone");
+        if(username == "" || password == ""){
+            return;
+        }else{
+            return true;
+        }
 
     }
 
+    const validateRegisterForm = () => {
+        registerUserForm.email_address === "" ? setReqEmail("dispBlock") : setReqEmail("dispNone");
+        registerUserForm.first_name === "" ? setReqFirstName("dispBlock") : setReqFirstName("dispNone");
+        registerUserForm.last_name === "" ? setReqLastName("dispBlock") : setReqLastName("dispNone");
+        registerUserForm.mobile_number === "" ? setReqMobile("dispBlock") : setReqMobile("dispNone");
+        registerUserForm.password === "" ? setReqPass("dispBlock") : setReqPass("dispNone");
+
+        if(
+            registerUserForm.email_address === "" ||
+            registerUserForm.first_name === "" ||
+            registerUserForm.last_name === "" ||
+            registerUserForm.mobile_number === "" ||
+            registerUserForm.password === ""
+        ){
+            return;
+        }else{
+            return true;
+        }
+    }
+
+    const onLoginFormSubmitted = () => {
+        if (validateLoginForm()) {
+            fetch(props.baseUrl + 'auth/login',
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "authorization": "Basic " + window.btoa(username + ":" + password)
+                    }
+                }).then(response => {
+                    if (response.status === 200) {
+                        window.sessionStorage.setItem("access-token", response.headers.get("access-token"));
+                        setSession(window.sessionStorage.getItem("access-token"));
+                        setIsLoggedIn(true);
+                        closeModal();
+                    }
+                }).catch(err => {
+                    console.log(err.message);
+                });
+        }
+    }
+
     const onFormSubmitted = async (event) => {
-        const rawResponse = await fetch(props.baseUrl + '/signup',
-                                    {
-                                        method:"POST",
-                                        headers:{
-                                            'Content-Type':'application/json'
-                                        },
-                                        body:JSON.stringify(registerUserForm)
-                                    }
-                                    );
-        const data = await rawResponse.json();
-        console.log(data);
+        if(validateRegisterForm()){
+            const rawResponse = await fetch(props.baseUrl + '/signup',
+            {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(registerUserForm)
+            }
+            );
+            const data = await rawResponse.json();
+            if(data.status === "ACTIVE"){
+                setShowDisplay("dispBlock");
+            }
+        }
     }
 
     const handleChange = (event, newValue) => {
@@ -118,29 +166,33 @@ export default function Header(props) {
     }
     const logoutHandler = async () => {
         const rawResponse = await fetch(props.baseUrl + '/auth/logout',
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "authorization": "Basic " + window.btoa(username + ":" + password)
-                                }
-                            });
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "authorization": "Basic " + window.btoa(username + ":" + password)
+                }
+            });
         window.sessionStorage.removeItem("access-token");
         setSession(window.sessionStorage.getItem("access-token"));
-        const data = await rawResponse.json();   
-        console.log(data); 
+        const data = await rawResponse.json();
         setIsLoggedIn(false);
     }
 
-    if (props.detailButton && isLoggedIn) {
-        button = <Button variant="contained" color="primary" onClick={openModal}>Book Show</Button>;
+    const bookShowHandler = () => {
+        window.location.href = `/bookshow/${props.movieid}`;
+    }
+
+
+    if (props.detailButton) {
+        button = <Button variant="contained" color="primary" onClick={bookShowHandler}>Book Show</Button>;
     }
     return (
         <div className="header">
-            <img src={logo} alt=""  className="logoRotate"/>
+            <img src={logo} alt="" className="logoRotate" />
             <span style={{ float: "right" }}>
                 {button}
-                {session? <Button variant="contained" color="default" style={{ marginLeft: "10px" }} onClick={logoutHandler}>Logout</Button> : <Button variant="contained" color="default" style={{ marginLeft: "10px" }} onClick={openModal}>Login</Button>
+                {session ? <Button variant="contained" color="default" style={{ marginLeft: "10px" }} onClick={logoutHandler}>Logout</Button> : <Button variant="contained" color="default" style={{ marginLeft: "10px" }} onClick={openModal}>Login</Button>
                 }
             </span>
             { showModal ? (<Modal
@@ -159,7 +211,7 @@ export default function Header(props) {
                     <Tab label="Register" />
                 </Tabs>
                 <TabPanel value={value} index={0}>
-                    <div style={{margin:"20px", padding: "0 20px"}}>
+                    <div style={{ margin: "20px", padding: "0 20px" }}>
                         <FormControl required className="formControl">
                             <InputLabel htmlFor="username">
                                 Username
@@ -170,10 +222,10 @@ export default function Header(props) {
                                 type="text"
                                 onChange={inputUserNameHandler}
                             />
-                            <FormHelperText className="dispNone">
+                            <FormHelperText className={requsername}>
                                 <span className="red">Required</span>
                             </FormHelperText>
-                        </FormControl><br/><br/>
+                        </FormControl><br /><br />
                         <FormControl required className="formControl">
                             <InputLabel htmlFor="password">
                                 Password
@@ -184,21 +236,21 @@ export default function Header(props) {
                                 name="password"
                                 onChange={inputPasswordHandler}
                             />
-                            <FormHelperText className="dispNone">
+                            <FormHelperText className={reqpassword}>
                                 <span className="red">Required</span>
                             </FormHelperText>
                         </FormControl>
-                        <br/>
-                        <br/>
-                        <br/>
-                        <div style={{textAlign: "center"}}>
+                        <br />
+                        <br />
+                        <br />
+                        <div style={{ textAlign: "center" }}>
                             <Button variant="contained" color="primary" onClick={onLoginFormSubmitted}>Login</Button>
                         </div>
                     </div>
                 </TabPanel>
                 <TabPanel value={value} index={1}>
-                <div style={{margin:"20px", padding: "0 20px"}}>
-                    
+                    <div style={{ margin: "20px", padding: "0 20px" }}>
+
                         <FormControl required className="formControl">
                             <InputLabel htmlFor="first_name">
                                 First Name
@@ -209,7 +261,10 @@ export default function Header(props) {
                                 type="text"
                                 onChange={inputChangedHandler}
                             />
-                        </FormControl><br/><br/>
+                        </FormControl>
+                        <FormHelperText className={reqfirstname}>
+                                <span className="red">Required</span>
+                        </FormHelperText><br /><br />
                         <FormControl required className="formControl">
                             <InputLabel htmlFor="last_name">
                                 Last Name
@@ -221,12 +276,12 @@ export default function Header(props) {
                                 type="text"
                                 onChange={inputChangedHandler}
                             />
-                            <FormHelperText className="dispNone">
+                            <FormHelperText className={reqlastname}>
                                 <span className="red">Required</span>
                             </FormHelperText>
                         </FormControl>
-                        <br/>
-                        <br/>
+                        <br />
+                        <br />
                         <FormControl required className="formControl">
                             <InputLabel htmlFor="email">
                                 Email
@@ -238,12 +293,12 @@ export default function Header(props) {
                                 type="text"
                                 onChange={inputChangedHandler}
                             />
-                            <FormHelperText className="dispNone">
+                            <FormHelperText className={reqemail}>
                                 <span className="red">Required</span>
                             </FormHelperText>
                         </FormControl>
-                        <br/>
-                        <br/>
+                        <br />
+                        <br />
                         <FormControl required className="formControl">
                             <InputLabel htmlFor="password">
                                 Password
@@ -255,12 +310,12 @@ export default function Header(props) {
                                 type="text"
                                 onChange={inputChangedHandler}
                             />
-                            <FormHelperText className="dispNone">
+                            <FormHelperText className={reqpass}>
                                 <span className="red">Required</span>
                             </FormHelperText>
                         </FormControl>
-                        <br/>
-                        <br/>
+                        <br />
+                        <br />
                         <FormControl required className="formControl">
                             <InputLabel htmlFor="contact">
                                 Contact No.
@@ -272,14 +327,15 @@ export default function Header(props) {
                                 type="number"
                                 onChange={inputChangedHandler}
                             />
-                            <FormHelperText className="dispNone">
+                            <FormHelperText className={reqmobile}>
                                 <span className="red">Required</span>
                             </FormHelperText>
                         </FormControl>
-                        <br/>
-                        <br/>
-                        <br/>
-                        <div style={{textAlign: "center"}}>
+                        <br />
+                        <br />
+                        <FormHelperText className={showdisplay} style={{fontSize:"14px", color:"black"}}>Registration Successful. Please Login!</FormHelperText>
+                        <br />
+                        <div style={{ textAlign: "center" }}>
                             <Button variant="contained" color="primary" onClick={onFormSubmitted}>Register</Button>
                         </div>
                     </div>

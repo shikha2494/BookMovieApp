@@ -66,7 +66,7 @@ export default function Details(props) {
 
     return (
         <div>
-            <Header baseUrl={props.baseUrl} detailButton />
+            <Header baseUrl={props.baseUrl} movieid={movieDetails.id} detailButton />
             <div className="detailsPage">
                 <Typography className="back">
                     <Link to={"/"}>
