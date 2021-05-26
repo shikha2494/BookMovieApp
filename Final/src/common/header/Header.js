@@ -180,7 +180,11 @@ export default function Header(props) {
     }
 
     const bookShowHandler = () => {
-        window.location.href = `/bookshow/${props.movieid}`;
+        if(session){
+            window.location.href = `/bookshow/${props.movieid}`;
+        }else{
+            openModal();
+        }
     }
 
 
