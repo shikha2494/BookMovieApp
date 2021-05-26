@@ -109,7 +109,7 @@ function Home(props) {
         let dataFilterList = cloneMovieList.filter((movie) => {
             let dataFilter = {};
             if (filterData.title) {
-                if (`${movie.title}`.toLowerCase() == `${filterData.title}`.toLowerCase()) {
+                if (`${movie.title}`.toLowerCase() === `${filterData.title}`.toLowerCase()) {
                     dataFilter.titleStatus = true;
                 } else {
                     dataFilter.titleStatus = false;

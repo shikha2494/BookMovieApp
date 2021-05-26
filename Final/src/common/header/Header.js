@@ -12,7 +12,6 @@ import FormControl from "@material-ui/core/FormControl";
 import Input from '@material-ui/core/Input';
 import FormHelperText from "@material-ui/core/FormHelperText";
 import InputLabel from "@material-ui/core/InputLabel";
-import { Redirect } from 'react-router';
 
 const customStyles = {
     content: {
@@ -41,7 +40,6 @@ function TabPanel(props) {
 
 export default function Header(props) {
 
-    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
     const [session, setSession] = React.useState(window.sessionStorage.getItem("access-token"));
     let button;
     const [showModal, setShowModal] = React.useState(false);
@@ -84,7 +82,7 @@ export default function Header(props) {
     const validateLoginForm = () => {
         username === "" ? setReqUserName("dispBlock") : setReqUserName("dispNone");
         password === "" ? setReqPassword("dispBlock") : setReqPassword("dispNone");
-        if(username == "" || password == ""){
+        if(username === "" || password === ""){
             return;
         }else{
             return true;
@@ -125,7 +123,6 @@ export default function Header(props) {
                     if (response.status === 200) {
                         window.sessionStorage.setItem("access-token", response.headers.get("access-token"));
                         setSession(window.sessionStorage.getItem("access-token"));
-                        setIsLoggedIn(true);
                         closeModal();
                     }
                 }).catch(err => {
@@ -176,7 +173,7 @@ export default function Header(props) {
         window.sessionStorage.removeItem("access-token");
         setSession(window.sessionStorage.getItem("access-token"));
         const data = await rawResponse.json();
-        setIsLoggedIn(false);
+        console.log(data);
     }
 
     const bookShowHandler = () => {
